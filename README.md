@@ -1,9 +1,54 @@
 # dynoutbox
 
+[![CI](https://github.com/mbarboss/dynoutbox/actions/workflows/ci.yml/badge.svg)](https://github.com/mbarboss/dynoutbox/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/mbarboss/dynoutbox/actions/workflows/codeql.yml/badge.svg)](https://github.com/mbarboss/dynoutbox/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A Go library for the transactional outbox pattern on AWS DynamoDB.
 
-Status: early development. The library API does not exist yet. This file only covers
-the development setup for now.
+## Status
+
+Early development. There is no public API yet and nothing is released. The design below
+is the plan; the guarantees and limits will be documented once they are implemented and
+tested.
+
+## The problem
+
+A service that updates its database and then publishes an event does two separate
+writes. If the process crashes between them, or the publish fails, the database and
+the rest of the system disagree: either a change happened and nobody heard about it, or
+an event announced a change that never committed.
+
+The outbox pattern fixes this by writing the event to the database in the same
+transaction as the business change. A separate relay then reads committed events and
+publishes them. An event exists if and only if the change committed.
+
+Existing Go outbox libraries target SQL databases. dynoutbox targets DynamoDB.
+
+## Planned design
+
+```
+app --Save()--> TransactWriteItems [business items + outbox Puts]
+                         |
+              outbox table stream (NEW_IMAGE)
+                         |
+      Lambda event source mapping (batching, bisect, partial batch failures)
+                         |
+       Lambda adapter --> relay core --PutEvents--> EventBridge bus --> consumers
+                              |                                   (idempotency helper)
+                              +--retries exhausted--> SQS dead-letter queue (full event)
+```
+
+- `Save()` adds one outbox item per event to the caller's `TransactWriteItems`, after
+  checking DynamoDB and EventBridge size limits.
+- The outbox is a separate, insert-only table. Items expire through TTL.
+- The relay reads new outbox items from DynamoDB Streams and publishes them to
+  EventBridge, retrying failed entries and sending events it cannot deliver to an SQS
+  dead-letter queue with the full event.
+- Delivery is at least once, so consumers can receive duplicates. A consumer-side helper
+  records each processed event ID in the consumer's own transaction to make handlers
+  idempotent.
+- Ordering is not guaranteed, because EventBridge does not guarantee it.
 
 ## Development setup
 
@@ -94,3 +139,12 @@ If a hook changes a file, the commit stops so you can review the change and stag
 again. CI runs the same hooks on every pull request, plus `check` on Linux, macOS and
 Windows and a gitleaks scan of the full history, so skipping hooks with `--no-verify`
 only moves the failure there.
+
+## Security
+
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Do not open
+a public issue.
+
+## License
+
+[MIT](LICENSE)
