@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Jobs ask for what they need; nothing is granted by default.
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      # Install only: the task runner runs the linter and checks its version.
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0
+          install-only: true
+      - run: go run ./tools/task check
+
+  hooks:
+    name: hooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      # The gitleaks hook scans staged changes only; the secrets job scans history.
+      SKIP: gitleaks
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0
+          install-only: true
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      # Also verifies formatting: the format hook fails if it changes any file.
+      - run: uvx pre-commit@4.7.0 run --all-files --show-diff-on-failure
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - run: go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --verbose .
+
+  # Single required check for the branch ruleset, so adding or renaming jobs
+  # does not require changing repository settings.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [check, hooks, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Fail if any job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1

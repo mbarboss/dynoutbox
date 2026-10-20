@@ -1,5 +1,5 @@
-# Local hooks for fast feedback. They can be skipped with --no-verify, so they
-# are not a security control on their own.
+# Local hooks for fast feedback. CI runs them again on every pull request, so
+# skipping them with --no-verify only moves the failure there.
 minimum_pre_commit_version: "4.0.0"
 default_install_hook_types: [pre-commit]
 
@@ -19,6 +19,11 @@ repos:
     rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # frozen: v8.30.1
     hooks:
       - id: gitleaks
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
+    hooks:
+      - id: actionlint
 
   # The task runner pins the golangci-lint version, so hooks and `check` agree.
   # golangci-lint works on packages, not single files, hence pass_filenames: false.

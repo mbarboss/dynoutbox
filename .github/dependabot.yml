@@ -1,0 +1,43 @@
+version: 2
+
+# cooldown delays version updates for a week after release, so a compromised
+# release has time to be caught and yanked. Security updates are not delayed.
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      gomod:
+        patterns: ["*"]
+    commit-message:
+      prefix: build
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+      include: scope
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      pre-commit:
+        patterns: ["*"]
+    commit-message:
+      prefix: build
+      include: scope
