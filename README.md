@@ -85,10 +85,12 @@ On each commit, pre-commit checks the staged files:
 - `format` and `lint` through the task runner, when Go files, `go.mod`, `go.sum` or
   `.golangci.yml` change;
 - gitleaks for hardcoded secrets (findings are redacted in the output);
+- actionlint for GitHub Actions workflows;
 - added files over 500 KB, private keys, merge conflict markers, file names that clash
   on case-insensitive file systems or are invalid on Windows, and CRLF line endings
   (fixed to LF).
 
 If a hook changes a file, the commit stops so you can review the change and stage it
-again. Hooks are a fast local check and can be skipped with `--no-verify`, so they are
-not a security control on their own.
+again. CI runs the same hooks on every pull request, plus `check` on Linux, macOS and
+Windows and a gitleaks scan of the full history, so skipping hooks with `--no-verify`
+only moves the failure there.
