@@ -1,4 +1,4 @@
-// Command task is the project task runner: `go run ./tools/task <format|check>`.
+// Command task is the project task runner: `go run ./tools/task <format|lint|check>`.
 //
 // It is written in Go so it runs the same way on Linux, macOS and Windows
 // without a Makefile or shell scripts. Commands are spawned with argument
@@ -35,7 +35,7 @@ const (
 	exitUsage   = 2
 )
 
-const usage = "usage: go run ./tools/task <format|check>"
+const usage = "usage: go run ./tools/task <format|lint|check>"
 
 // toolPrefixes are excluded from the coverage floor, which applies to library code.
 var toolPrefixes = []string{modulePath + "/tools/"}
@@ -78,6 +78,8 @@ func run(ctx context.Context, args []string, d deps) int {
 	switch args[0] {
 	case "format":
 		steps = formatSteps()
+	case "lint":
+		steps = lintSteps()
 	case "check":
 		steps = checkSteps()
 	default:
@@ -102,15 +104,22 @@ func formatSteps() []step {
 	}
 }
 
-func checkSteps() []step {
+// lintSteps is the fast subset of check used by the pre-commit hook.
+func lintSteps() []step {
 	return []step{
-		command("go.mod tidy", "go", "mod", "tidy", "-diff"),
 		{name: "linter version", run: requireGolangciVersion},
 		command("lint", "golangci-lint", "run"),
-		command("test", "go", "test", "-race", "-covermode=atomic", "-coverprofile="+coverProfile, "./..."),
-		{name: "coverage floor", run: requireCoverageFloor},
-		command("vulnerabilities", "go", "run", "golang.org/x/vuln/cmd/govulncheck@"+govulncheckVersion, "./..."),
 	}
+}
+
+func checkSteps() []step {
+	steps := []step{command("go.mod tidy", "go", "mod", "tidy", "-diff")}
+	steps = append(steps, lintSteps()...)
+	return append(steps,
+		command("test", "go", "test", "-race", "-covermode=atomic", "-coverprofile="+coverProfile, "./..."),
+		step{name: "coverage floor", run: requireCoverageFloor},
+		command("vulnerabilities", "go", "run", "golang.org/x/vuln/cmd/govulncheck@"+govulncheckVersion, "./..."),
+	)
 }
 
 func command(name, program string, args ...string) step {

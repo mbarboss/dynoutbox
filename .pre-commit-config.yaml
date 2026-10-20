@@ -1,0 +1,38 @@
+# Local hooks for fast feedback. They can be skipped with --no-verify, so they
+# are not a security control on their own.
+minimum_pre_commit_version: "4.0.0"
+default_install_hook_types: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # frozen: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # The task runner pins the golangci-lint version, so hooks and `check` agree.
+  # golangci-lint works on packages, not single files, hence pass_filenames: false.
+  - repo: local
+    hooks:
+      - id: format
+        name: format (go run ./tools/task format)
+        entry: go run ./tools/task format
+        language: system
+        files: (\.go|^go\.(mod|sum)|^\.golangci\.yml)$
+        pass_filenames: false
+      - id: lint
+        name: lint (go run ./tools/task lint)
+        entry: go run ./tools/task lint
+        language: system
+        files: (\.go|^go\.(mod|sum)|^\.golangci\.yml)$
+        pass_filenames: false

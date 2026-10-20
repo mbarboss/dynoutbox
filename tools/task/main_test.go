@@ -87,6 +87,60 @@ func TestRunFormatRunsFormatter(t *testing.T) {
 	}
 }
 
+func TestRunLintRunsLinterOnly(t *testing.T) {
+	r := &fakeRunner{version: golangciVersion}
+	d, _ := newDeps(r, "")
+
+	code := run(context.Background(), []string{"lint"}, d)
+
+	if code != exitOK {
+		t.Fatalf("run() = %d, want %d", code, exitOK)
+	}
+	want := []string{"golangci-lint version", "golangci-lint run"}
+	if !slices.Equal(r.calls, want) {
+		t.Errorf("calls = %q, want %q", r.calls, want)
+	}
+}
+
+func TestRunLintFailsWhenLinterReportsIssues(t *testing.T) {
+	r := &fakeRunner{version: golangciVersion, failOn: "golangci-lint run"}
+	d, out := newDeps(r, "")
+
+	code := run(context.Background(), []string{"lint"}, d)
+
+	if code != exitFailure {
+		t.Fatalf("run() = %d, want %d", code, exitFailure)
+	}
+	if !strings.Contains(out.String(), "lint failed") {
+		t.Errorf("output %q does not name the failed step", out.String())
+	}
+}
+
+func TestRunLintFailsOnWrongLinterVersion(t *testing.T) {
+	r := &fakeRunner{version: "2.0.0"}
+	d, out := newDeps(r, "")
+
+	code := run(context.Background(), []string{"lint"}, d)
+
+	if code != exitFailure {
+		t.Fatalf("run() = %d, want %d", code, exitFailure)
+	}
+	if slices.Contains(r.calls, "golangci-lint run") {
+		t.Error("lint ran with the wrong linter version")
+	}
+	if !strings.Contains(out.String(), golangciVersion) {
+		t.Errorf("output %q does not name the required version", out.String())
+	}
+}
+
+func TestUsageListsEveryCommand(t *testing.T) {
+	for _, name := range []string{"format", "lint", "check"} {
+		if !strings.Contains(usage, name) {
+			t.Errorf("usage %q does not list %q", usage, name)
+		}
+	}
+}
+
 func TestRunCheckStopsAtFirstFailure(t *testing.T) {
 	r := &fakeRunner{version: golangciVersion, failOn: "golangci-lint run"}
 	d, out := newDeps(r, fullProfile)
