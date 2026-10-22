@@ -57,7 +57,7 @@ You need four tools. Commands are given for Linux, macOS and Windows.
 ### 1. Go
 
 Install any recent Go from https://go.dev/dl/. The module pins its toolchain
-(`toolchain go1.27.2` in `go.mod`), and Go downloads that version on first use as long
+(`toolchain go1.27.3` in `go.mod`), and Go downloads that version on first use as long
 as `GOTOOLCHAIN` is left at its default (`auto`).
 
 ### 2. A C compiler

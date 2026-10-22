@@ -17,3 +17,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - CI on Linux, macOS and Windows, a full-history secret scan, CodeQL and Dependabot.
 - README, license, security policy and pull request template.
 - Threat model based on the OWASP Top 10:2025 (`docs/threat-model.md`).
+
+### Security
+
+- Go toolchain pinned to 1.27.3, which fixes GO-2026-6809 in `crypto/x509`. The library
+  did not call the affected code.
