@@ -24,6 +24,11 @@ reply to your report and agree on a fix and disclosure date with you before anyt
 made public. Credit is given in the advisory unless you prefer
 otherwise.
 
+## Threat model
+
+The threats considered, their mitigations and the accepted risks are described in
+[docs/threat-model.md](docs/threat-model.md).
+
 ## Scope
 
 In scope: the library code, the task runner in `tools/`, the CI workflows and, once they

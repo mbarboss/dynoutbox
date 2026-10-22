@@ -16,3 +16,4 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   file names and workflow files.
 - CI on Linux, macOS and Windows, a full-history secret scan, CodeQL and Dependabot.
 - README, license, security policy and pull request template.
+- Threat model based on the OWASP Top 10:2025 (`docs/threat-model.md`).
