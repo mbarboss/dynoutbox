@@ -19,6 +19,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Threat model based on the OWASP Top 10:2025 (`docs/threat-model.md`).
 - Emulator spike findings and the choice of LocalStack for end-to-end tests
   (`docs/spikes/s1-emulator.md`).
+- `NewEvent`, which builds a validated event: UUIDv7 ID, source, detail type, JSON
+  object payload of at most 256 KiB, occurrence time in UTC and an optional correlation
+  ID. Invalid input returns a `*ValidationError` that matches `ErrInvalidEvent` and never
+  includes the rejected value.
 
 ### Security
 

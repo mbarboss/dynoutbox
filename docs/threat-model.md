@@ -161,10 +161,10 @@ break the JSON envelope, or inject fake entries into logs.
 | Mitigation | Owner | Status |
 | --- | --- | --- |
 | DynamoDB expressions use only name and value placeholders (`#n`, `:v`); no string concatenation with event data. | Library | planned (S4, S11) |
-| Envelope serialized with `encoding/json`, never assembled by hand; payload must be valid JSON within size limits. | Library | planned (S2, S3) |
-| `source` and `detail-type` checked against an allowlist of characters and lengths. | Library | planned (S2) |
+| Envelope serialized with `encoding/json`, never assembled by hand; payload must be valid JSON within size limits. | Library | payload checks in place (S2: JSON object, UTF-8, 256 KiB, 1000 levels); serialization planned (S3) |
+| `source` and `detail-type` checked against an allowlist of characters and lengths; `source` may not use the reserved `aws.` prefix. | Library | in place (S2) |
 | Logs are structured (`log/slog`) and never contain payloads, so user data does not reach log lines. | Library | planned (S6 onward) |
-| Malicious-input tests for every validator and decoder, with Go's built-in fuzzing for decoders. | Library | planned (S2, S3, S6) |
+| Malicious-input tests for every validator and decoder, with Go's built-in fuzzing for decoders. | Library | in place for the event validator (S2); planned (S3, S6) |
 
 ### A06 Insecure Design
 

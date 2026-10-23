@@ -8,9 +8,9 @@ A Go library for the transactional outbox pattern on AWS DynamoDB.
 
 ## Status
 
-Early development. There is no public API yet and nothing is released. The design below
-is the plan; the guarantees and limits will be documented once they are implemented and
-tested.
+Early development. Nothing is released and the API is incomplete and may change. So far
+the package only builds validated events (`NewEvent`). The design below is the plan; the
+guarantees and limits will be documented once they are implemented and tested.
 
 ## The problem
 
