@@ -57,7 +57,7 @@ jobs:
         with:
           version: v2.15.0
           install-only: true
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       # Also verifies formatting: the format hook fails if it changes any file.
       - run: uvx pre-commit@4.7.0 run --all-files --show-diff-on-failure
 
